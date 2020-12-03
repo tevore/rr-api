@@ -1,7 +1,7 @@
 package com.tevore.rrapi.service;
 
 import com.tevore.rrapi.domain.Wrestler;
-import com.tevore.rrapi.domain.repository.WrestlerNodeRepository;
+import com.tevore.rrapi.domain.repository.WrestlerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,21 +14,21 @@ public class WrestlerDataService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(WrestlerDataService.class);
 
-    private WrestlerNodeRepository wrestlerNodeRepository;
+    private WrestlerRepository wrestlerRepository;
 
     @Autowired
-    public WrestlerDataService(WrestlerNodeRepository wrestlerNodeRepository) {
-        this.wrestlerNodeRepository = wrestlerNodeRepository;
+    public WrestlerDataService(WrestlerRepository wrestlerRepository) {
+        this.wrestlerRepository = wrestlerRepository;
     }
 
     public Wrestler findWrestler(String name) {
         LOGGER.info("Looking for wrestler {}", name);
-        return wrestlerNodeRepository.findByName(name);
+        return wrestlerRepository.findByName(name);
     }
 
     public List<Wrestler> findWinners() {
 
         LOGGER.info("Gathering all rumble winners...");
-        return wrestlerNodeRepository.findAllWinners();
+        return wrestlerRepository.findAllWinners();
     }
 }

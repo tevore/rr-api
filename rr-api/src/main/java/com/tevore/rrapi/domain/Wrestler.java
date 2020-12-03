@@ -5,6 +5,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.neo4j.core.schema.*;
 
+import java.util.List;
+
 @Node("Wrestler")
 @Getter
 @Setter
@@ -18,7 +20,8 @@ public class Wrestler {
     private String name;
 
     @Relationship(type = "WON")
-    private Boolean won;
+    private List<Event> eventsWon;
+
 
     public Wrestler(String name) {
         this.name = name;
