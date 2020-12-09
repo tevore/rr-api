@@ -1,5 +1,6 @@
 package com.tevore.rrapi.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -17,18 +18,21 @@ import java.util.List;
 public class Event {
 
     @Id
+    @JsonIgnore
     private Long id;
 
     @Property("name")
+    @JsonIgnore
     private String name;
 
     @Property("year")
     private Integer year;
 
     @Relationship(type = "WON", direction = Relationship.Direction.INCOMING)
+    @JsonIgnore
     private List<Wrestler> winners;
 
-
+    @JsonIgnore
     private List<Wrestler> participants;
 
     public Event(String name, Integer year) {
