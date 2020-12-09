@@ -1,11 +1,289 @@
 import os
 from bs4 import BeautifulSoup
+import re
 """This script uses BeautifulSoup to parse and collect table data from a given html_doc pattern.
-Once this is done, it applies some transformations based on the data and spits it out to a 
+Once this is done, it applies some transformations based on the data and spits it out to a
 cleaner version of a Cypher create script for Neo4j hydration"""
 
 #consider list of html_docs
-html_doc = '''
+html_doc_1988 = '''<table class="wikitable sortable">
+<tbody><tr>
+<th>Draw
+</th>
+<th>Entrant
+</th>
+<th>Order
+</th>
+<th>Eliminated by
+</th>
+<th>Time<sup id="cite_ref-24" class="reference"><a href="#cite_note-24">&#91;24&#93;</a></sup>
+</th>
+<th>Eliminations
+</th></tr>
+<tr>
+<td>1
+</td>
+<td><a href="/wiki/Bret_Hart" title="Bret Hart">Bret Hart</a>
+</td>
+<td>8
+</td>
+<td>Don Muraco
+</td>
+<td>25:42
+</td>
+<td>1
+</td></tr>
+<tr>
+<td>2
+</td>
+<td><a href="/wiki/Tito_Santana" title="Tito Santana">Tito Santana</a>
+</td>
+<td>2
+</td>
+<td>Bret Hart &amp; Jim Neidhart
+</td>
+<td>10:41
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>3
+</td>
+<td><a href="/wiki/Butch_Reed" title="Butch Reed">Butch Reed</a>
+</td>
+<td>1
+</td>
+<td>Jake Roberts
+</td>
+<td>03:18
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>4
+</td>
+<td><a href="/wiki/Jim_Neidhart" title="Jim Neidhart">Jim Neidhart</a>
+</td>
+<td>6
+</td>
+<td>Hillbilly Jim
+</td>
+<td>19:06
+</td>
+<td>1
+</td></tr>
+<tr>
+<td>5
+</td>
+<td><a href="/wiki/Jake_Roberts" title="Jake Roberts">Jake Roberts</a>
+</td>
+<td>10
+</td>
+<td>One Man Gang
+</td>
+<td>21:52
+</td>
+<td>2
+</td></tr>
+<tr>
+<td>6
+</td>
+<td><a href="/wiki/Harley_Race" title="Harley Race">Harley Race</a>
+</td>
+<td>4
+</td>
+<td>Don Muraco
+</td>
+<td>10:03
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>7
+</td>
+<td><a href="/wiki/Jim_Brunzell" title="Jim Brunzell">Jim Brunzell</a>
+</td>
+<td>5
+</td>
+<td>Nikolai Volkoff
+</td>
+<td>12:06
+</td>
+<td>1
+</td></tr>
+<tr>
+<td>8
+</td>
+<td><a href="/wiki/Sam_Houston_(wrestler)" title="Sam Houston (wrestler)">Sam Houston</a>
+</td>
+<td>7
+</td>
+<td>Ron Bass
+</td>
+<td>14:39
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>9
+</td>
+<td><a href="/wiki/Dangerous_Danny_Davis" title="Dangerous Danny Davis">Danny Davis</a>
+</td>
+<td>13
+</td>
+<td>Jim Duggan
+</td>
+<td>17:51
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>10
+</td>
+<td><a href="/wiki/Boris_Zhukov" title="Boris Zhukov">Boris Zhukov</a>
+</td>
+<td>3
+</td>
+<td>Jake Roberts &amp; Jim Brunzell
+</td>
+<td>02:33
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>11
+</td>
+<td><a href="/wiki/Don_Muraco" title="Don Muraco">Don Muraco</a>
+</td>
+<td>17
+</td>
+<td>Dino Bravo &amp; One Man Gang
+</td>
+<td>16:10
+</td>
+<td>3
+</td></tr>
+<tr>
+<td>12
+</td>
+<td><a href="/wiki/Nikolai_Volkoff" title="Nikolai Volkoff">Nikolai Volkoff</a>
+</td>
+<td>11
+</td>
+<td>Jim Duggan
+</td>
+<td>11:40
+</td>
+<td>1
+</td></tr>
+<tr style="background: gold">
+<td>13
+</td>
+<td><a href="/wiki/Jim_Duggan" title="Jim Duggan">Jim Duggan</a>
+</td>
+<td>
+Winner
+</td>
+<td>Winner
+</td>
+<td>14:44
+</td>
+<td>3
+</td></tr>
+<tr>
+<td>14
+</td>
+<td><a href="/wiki/Ron_Bass_(wrestler)" title="Ron Bass (wrestler)">Ron Bass</a>
+</td>
+<td>16
+</td>
+<td>Don Muraco
+</td>
+<td>10:14
+</td>
+<td>2
+</td></tr>
+<tr>
+<td>15
+</td>
+<td><a href="/wiki/B._Brian_Blair" title="B. Brian Blair">B. Brian Blair</a>
+</td>
+<td>9
+</td>
+<td rowspan="3">One Man Gang
+</td>
+<td>05:50
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>16
+</td>
+<td><a href="/wiki/Hillbilly_Jim" title="Hillbilly Jim">Hillbilly Jim</a>
+</td>
+<td>12
+</td>
+<td>One Man Gang
+</td>
+<td>05:55
+</td>
+<td>1
+</td></tr>
+<tr>
+<td>17
+</td>
+<td><a href="/wiki/Dino_Bravo" title="Dino Bravo">Dino Bravo</a>
+</td>
+<td>18
+</td>
+<td>One Man Gang
+</td>
+<td>08:12
+</td>
+<td>2
+</td></tr>
+<tr>
+<td>18
+</td>
+<td><a href="/wiki/The_Ultimate_Warrior" title="The Ultimate Warrior">The Ultimate Warrior</a>
+</td>
+<td>14
+</td>
+<td>Dino Bravo &amp; One Man Gang
+</td>
+<td>03:51
+</td>
+<td>0
+</td></tr>
+<tr>
+<td>19
+</td>
+<td><a href="/wiki/One_Man_Gang" title="One Man Gang">One Man Gang</a>
+</td>
+<td>19
+</td>
+<td>Jim Duggan
+</td>
+<td>06:50
+</td>
+<td>6
+</td></tr>
+<tr>
+<td>20
+</td>
+<td><a href="/wiki/Junkyard_Dog" title="Junkyard Dog">Junkyard Dog</a>
+</td>
+<td>15
+</td>
+<td>Ron Bass
+</td>
+<td>02:30
+</td>
+<td>0
+</td></tr>
+</tbody></table>'''
+
+html_doc_1989 = '''
 
 
 <table id="rr_table" class="wikitable sortable" style="font-size:100%; text-align:left" border="1">
@@ -23,11 +301,11 @@ html_doc = '''
 <th>Eliminations
 </th></tr>
 <tr>
-<td><span data-sort-value="01&#160;!">1</span>
+<td>1
 </td>
 <td><a href="/wiki/Ax_(wrestler)" title="Ax (wrestler)">Ax</a>
 </td>
-<td><span data-sort-value="04&#160;!">4</span>
+<td>4
 </td>
 <td>Mr. Perfect
 </td>
@@ -36,24 +314,24 @@ html_doc = '''
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="02&#160;!">2</span>
+<td>2
 </td>
 <td><a href="/wiki/Smash_(wrestler)" title="Smash (wrestler)">Smash</a>
 </td>
-<td><span data-sort-value="01&#160;!">1</span>
+<td>1
 </td>
-<td>André the Giant
+<td>Andre the Giant
 </td>
 <td>04:54
 </td>
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="03&#160;!">3</span>
+<td>3
 </td>
-<td><a href="/wiki/Andr%C3%A9_the_Giant" title="André the Giant">André the Giant</a>
+<td><a href="/wiki/Andre_the_Giant" title="Andre the Giant">Andre the Giant</a>
 </td>
-<td><span data-sort-value="05&#160;!">5</span>
+<td>5
 </td>
 <td>Himself (Damien and Jake Roberts)^
 </td>
@@ -62,7 +340,7 @@ html_doc = '''
 <td>4
 </td></tr>
 <tr>
-<td><span data-sort-value="04&#160;!">4</span>
+<td>4
 </td>
 <td><a href="/wiki/Curt_Hennig" title="Curt Hennig">Mr. Perfect</a>
 </td>
@@ -75,24 +353,24 @@ html_doc = '''
 <td>1
 </td></tr>
 <tr>
-<td><span data-sort-value="05&#160;!">5</span>
+<td>5
 </td>
 <td><a href="/wiki/Ronnie_Garvin" class="mw-redirect" title="Ronnie Garvin">Ronnie Garvin</a>
 </td>
-<td><span data-sort-value="02&#160;!">2</span>
+<td>2
 </td>
-<td>André the Giant
+<td>Andre the Giant
 </td>
 <td>02:39
 </td>
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="06&#160;!">6</span>
+<td>6
 </td>
 <td><a href="/wiki/Greg_Valentine" title="Greg Valentine">Greg Valentine</a>
 </td>
-<td><span data-sort-value="08&#160;!">8</span>
+<td>8
 </td>
 <td>Randy Savage
 </td>
@@ -101,24 +379,24 @@ html_doc = '''
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="07&#160;!">7</span>
+<td>7
 </td>
 <td><a href="/wiki/Jake_Roberts" title="Jake Roberts">Jake Roberts</a>
 </td>
-<td><span data-sort-value="03&#160;!">3</span>
+<td>3
 </td>
-<td>André the Giant
+<td>Andre the Giant
 </td>
 <td>02:08
 </td>
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="08&#160;!">8</span>
+<td>8
 </td>
 <td><a href="/wiki/Ron_Bass_(wrestler)" title="Ron Bass (wrestler)">Ron Bass</a>
 </td>
-<td><span data-sort-value="07&#160;!">7</span>
+<td>7
 </td>
 <td>Marty Jannetty and Shawn Michaels
 </td>
@@ -127,11 +405,11 @@ html_doc = '''
 <td>0
 </td></tr>
 <tr>
-<td><span data-sort-value="09&#160;!">9</span>
+<td>9
 </td>
 <td><a href="/wiki/Shawn_Michaels" title="Shawn Michaels">Shawn Michaels</a>
 </td>
-<td><span data-sort-value="09&#160;!">9</span>
+<td>9
 </td>
 <td>Arn Anderson and Randy Savage
 </td>
@@ -157,7 +435,7 @@ html_doc = '''
 </td>
 <td><a href="/wiki/The_Honky_Tonk_Man" title="The Honky Tonk Man">The Honky Tonk Man</a>
 </td>
-<td><span data-sort-value="06&#160;!">6</span>
+<td>6
 </td>
 <td>Bushwhacker Butch and Tito Santana
 </td>
@@ -224,6 +502,8 @@ html_doc = '''
 </td>
 <td>16
 </td>
+<td>Hulk Hogan
+</td>
 <td>10:00
 </td>
 <td>2
@@ -234,6 +514,8 @@ html_doc = '''
 <td><a href="/wiki/Tully_Blanchard" title="Tully Blanchard">Tully Blanchard</a>
 </td>
 <td>17
+</td>
+<td>Hulk Hogan
 </td>
 <td>08:02
 </td>
@@ -272,6 +554,8 @@ html_doc = '''
 </td>
 <td>14
 </td>
+<td>Hulk Hogan
+</td>
 <td>01:08
 </td>
 <td>0
@@ -283,6 +567,8 @@ html_doc = '''
 </td>
 <td>18
 </td>
+<td>Hulk Hogan
+</td>
 <td>00:02
 </td>
 <td>0
@@ -293,6 +579,8 @@ html_doc = '''
 <td><a href="/wiki/Big_Boss_Man_(wrestler)" title="Big Boss Man (wrestler)">Big Boss Man</a>
 </td>
 <td>22
+<td>Hulk Hogan
+</td>
 </td>
 <td>04:18
 </td>
@@ -355,9 +643,9 @@ html_doc = '''
 </td>
 <td><b><a href="/wiki/Big_John_Studd" title="Big John Studd">Big John Studd</a></b>
 </td>
-<td><span data-sort-value="30&#160;!">-</span>
+<td>Winner
 </td>
-<td><b>Winner</b>
+<td>Winner
 </td>
 <td>12:21
 </td>
@@ -405,47 +693,88 @@ html_doc = '''
 
 '''
 
-soup = BeautifulSoup(html_doc, 'html.parser')
+soup = BeautifulSoup(html_doc_1989, 'html.parser')
 
 tables = soup.find_all('table')
 
-print("-- Draw -- | -- Entrant -- | -- Order -- | -- Eliminated By -- | -- Time -- |")
+event = 'RR1989'
+cyper_create_queries = []
+cyper_participate_queries = []
+cyper_elimination_queries = []
+cyper_win_query = []
+
+#print("-- Draw -- | -- Entrant -- | -- Order -- | -- Eliminated By -- | -- Time -- |")
 
 trs = soup.find_all('tr')
 count = 0
+same_elims = 0
+w_eliminated_by = ""
+rowspan_true = False
 
 for tr in trs:
 
     if count != 0:
 
         table_data = tr.find_all('td')
-        w_draw = table_data[0].span.contents[0].strip() if table_data[0].span is not None else table_data[0].contents[0].strip()
+        w_draw = table_data[0].contents[0].strip() #if table_data[0].span is not None else table_data[0].contents[0].strip()
         w_name = table_data[1].a.contents[0].strip()
         w_order = table_data[2].span.contents[0] if table_data[2].span is not None else table_data[2].contents[0]
-        same_elims = table_data[3].get('rowspan') if table_data[3].get('rowspan') is not None else "0"
-        w_eliminated_by = table_data[3].contents[0].strip() if same_elims != "0" else table_data[3].contents[0].strip()
-        #w_eliminated_by = table_data[3].get('rowspan') #if getrowspan, repeat this
-        #if there is a rowspan, we need to repeat the initial number for rowspan times and then
-        #assume table_data[3] is time in. If not, table_data[4] will be the time in
-        w_time_in = table_data[4].contents[0].strip() if same_elims is not None else table_data[3].contents[0].strip()
-        #print(w_eliminated_by)
-        #print(w_time_in)
-        #print(table_data[1].a.contents[0])
-        #print(same_elims)
+        if int(same_elims) > 0:
+            rowspan_true = False
+            #print("Greater than zero")
+            int_same_elims = int(same_elims)
+            int_same_elims -= 1
+            same_elims = str(int_same_elims)
+            #w_time_in = table_data[3].contents[0].strip()
+        else:
+            same_elims = table_data[3].get('rowspan') if table_data[3].get('rowspan') is not None else "0"
+            if int(same_elims) > 0:
+                rowspan_true = True
+                w_eliminated_by = table_data[3].contents[0].strip()
+                w_time_in = table_data[4].contents[0].strip()
+
+        if int(same_elims) <= 0:
+            if w_order != '-':
+                w_eliminated_by = table_data[3].contents[0].strip()
+            else:
+                w_eliminated_by = 'WINNER'
+
+        w_time_in = table_data[4].contents[0].strip() if rowspan_true else table_data[4].contents[0].strip()
 
         if w_order != '-':
             w_order = w_order.strip()
         else:
-            w_order = "WON"
-            w_eliminated_by = "WON"
+            w_order = "-"
+            w_eliminated_by = "Winner"
         #print(type(table_data[2]))
 
-        print(f"-- {w_draw} -- | -- {w_name}"
-              + f" -- | -- {w_order} -- | -- {w_eliminated_by} -- | -- {w_time_in} -- |")
+        #print(f"-- {w_draw} -- | -- {w_name}"
+        #      + f" -- | -- {w_order} -- | -- {w_eliminated_by} -- | -- {w_time_in} -- |")
+        alias = w_name.replace(" ", "")
+        alias = re.sub("\W*","", alias)
+        elim_alias = w_eliminated_by.replace(" ", "")
+        cyper_create_queries.append("MERGE ("+alias+":Wrestler {name:'" + w_name + "'})")
+        cyper_participate_queries.append("CREATE (" + alias + ")-[:WAS_IN{draw:"+w_draw+"}]->("+event+")")
+        elim_query = "CREATE (" + alias + ")-[:ELIMINATED_BY {order:" + str(w_order) + ", time:\"" + str(w_time_in) + "\"}]->(" + elim_alias + ")"
+        #print(elim_query)
+        cyper_elimination_queries.append(elim_query)
+        #print("CREATE (w:Wrestler {name:" + w_name + "})")
     count += 1
 
 #create cypher script here and move on
-
+print(f"//{event}")
+print("//creates")
+for q in cyper_create_queries:
+    print(q)
+print("//participants")
+#print(cyper_create_queries)
+for q in cyper_participate_queries:
+    print(q)
+print("//eliminations")
+for q in cyper_elimination_queries:
+    print(q)
+#print(cyper_participate_queries)
+#print(cyper_elimination_queries)
 
 
 # op = open("events.csv", "w")
